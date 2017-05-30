@@ -4,7 +4,6 @@ from django.db.models.fields.files import FieldFile
 from django.db.models.fields.files import FileDescriptor
 
 from datetime import datetime
-import md5
 import os.path
 import subprocess
 
@@ -274,7 +273,14 @@ class VideoSpecFieldFile(VideoFieldFile):
     def generate_file_name(self):
         cachefile_dir = getattr(settings, 'VIDEOKIT_CACHEFILE_DIR', VideokitConfig.VIDEOKIT_CACHEFILE_DIR)
         dir = os.path.join(cachefile_dir, os.path.splitext(self.source_file.name)[0])
-        hash = md5.new('%s%s%s' % (self.source_file.name, self.field.format, str(datetime.now()))).hexdigest()
+        file_string = '%s%s%s' % (self.source_file.name, self.field.format, str(datetime.now()))
+        try:
+            import md5
+            hash = md5.new(file_string).hexdigest()
+        except ImportError:
+            from hashlib import md5
+            hash = md5(file_string.encode()).hexdigest()
+        
         file_name = hash + '.' + self.field.format
 
         return os.path.join(dir, file_name)
