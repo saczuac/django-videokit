@@ -220,7 +220,7 @@ class VideoField(models.FileField):
             setattr(instance, self.thumbnail_field, thumbnail)
 
     def formfield(self, **kwargs):
-        defaults = { 'form_class' : videokit_forms.VideoField }
+        defaults = { 'form_class' : videokit.forms.VideoField }
         defaults.update(kwargs)
         return super(VideoField, self).formfield(**defaults)
 
