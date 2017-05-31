@@ -15,6 +15,8 @@ from videokit.fields import VideoFileDescriptor
 from videokit.fields import VideoSpecFieldFile
 from videokit.fields import VideoSpecFileDescriptor
 
+from videokit.forms import VideoField as VideoFormField
+
 class VideoField(models.FileField):
     attr_class = VideoFieldFile
     descriptor_class = VideoFileDescriptor
@@ -220,7 +222,7 @@ class VideoField(models.FileField):
             setattr(instance, self.thumbnail_field, thumbnail)
 
     def formfield(self, **kwargs):
-        defaults = { 'form_class' : videokit_forms.VideoField }
+        defaults = { 'form_class' : VideoFormField }
         defaults.update(kwargs)
         return super(VideoField, self).formfield(**defaults)
 

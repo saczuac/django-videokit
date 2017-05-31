@@ -4,7 +4,6 @@ from django.db.models.fields.files import FieldFile
 from django.db.models.fields.files import FileDescriptor
 
 from datetime import datetime
-import md5
 import os.path
 import subprocess
 
@@ -19,23 +18,23 @@ def get_video_dimensions(file):
             process = subprocess.Popen(
                 ['mediainfo', '--Inform=Video;%Width%', path],
                 stdout = subprocess.PIPE, stderr = subprocess.PIPE)
-        
+
             stdout, stderr = process.communicate()
             if process.wait() == 0:
-                width = int(stdout.strip(' \t\n\r'))
+                width = int(stdout.decode('utf8').strip(' \t\n\r'))
             else:
                 return (0,0)
 
             process = subprocess.Popen(
                 ['mediainfo', '--Inform=Video;%Height%', path],
                 stdout = subprocess.PIPE, stderr = subprocess.PIPE)
-        
+
             stdout, stderr = process.communicate()
             if process.wait() == 0:
-                height = int(stdout.strip(' \t\n\r'))
+                height = int(stdout.decode('utf8').strip(' \t\n\r'))
             else:
                 return (None, None)
-            
+
             return (width, height)
         except OSError:
             pass
@@ -44,7 +43,7 @@ def get_video_dimensions(file):
 
 def get_video_rotation(file):
     path = os.path.join(settings.MEDIA_ROOT, file.name)
-    
+
     if os.path.isfile(path):
         try:
             process = subprocess.Popen(
@@ -54,7 +53,7 @@ def get_video_rotation(file):
             stdout, stderr = process.communicate()
             if process.wait() == 0:
                 try:
-                    rotation = float(stdout.strip(' \t\n\r'))
+                    rotation = float(stdout.decode('utf8').strip(' \t\n\r'))
                 except ValueError:
                     rotation = 0.0
 
@@ -75,7 +74,7 @@ def get_video_mimetype(file):
 
             stdout, stderr = process.communicate()
             if process.wait() == 0:
-                mimetype = stdout.strip(' \t\n\r')
+                mimetype = stdout.decode('utf8').strip(' \t\n\r')
                 if mimetype == 'video/H264':
                     mimetype = 'video/mp4'
 
@@ -89,7 +88,7 @@ def get_video_mimetype(file):
 
 def get_video_duration(file):
     path = os.path.join(settings.MEDIA_ROOT, file.name)
-    
+
     if os.path.isfile(path):
         try:
             process = subprocess.Popen(
@@ -99,14 +98,14 @@ def get_video_duration(file):
             stdout, stderr = process.communicate()
             if process.wait() == 0:
                 try:
-                    duration = int(stdout.strip(' \t\n\r'))
+                    duration = int(stdout.decode('utf8').strip(' \t\n\r'))
                 except ValueError:
                     duration = 0
 
                 return duration
         except OSError:
             pass
-        
+
     return 0
 
 def get_video_thumbnail(file):
@@ -151,9 +150,9 @@ class VideoFile(File):
 
     def _get_duration(self):
         return self._get_video_duration()
-        
+
     duration = property(_get_duration)
-    
+
     def _get_thumbnail(self):
         return self._get_video_thumbnail()
 
@@ -162,13 +161,13 @@ class VideoFile(File):
     def _get_video_dimensions(self):
         if not hasattr(self, '_dimensions_cache'):
             self._dimensions_cache = get_video_dimensions(self)
-        
+
         return self._dimensions_cache
 
     def _get_video_rotation(self):
         if not hasattr(self, '_rotation_cache'):
             self._rotation_cache = get_video_rotation(self)
-        
+
         return self._rotation_cache
 
     def _get_video_mimetype(self):
@@ -176,7 +175,7 @@ class VideoFile(File):
             self._mimetype_cache = get_video_mimetype(self)
 
         return self._mimetype_cache
-        
+
     def _get_video_duration(self):
         if not hasattr(self, '_duration_cache'):
             self._duration_cache = get_video_duration(self)
@@ -270,11 +269,18 @@ class VideoSpecFieldFile(VideoFieldFile):
                 return True
 
         return False
-        
+
     def generate_file_name(self):
         cachefile_dir = getattr(settings, 'VIDEOKIT_CACHEFILE_DIR', VideokitConfig.VIDEOKIT_CACHEFILE_DIR)
         dir = os.path.join(cachefile_dir, os.path.splitext(self.source_file.name)[0])
-        hash = md5.new('%s%s%s' % (self.source_file.name, self.field.format, str(datetime.now()))).hexdigest()
+        file_string = '%s%s%s' % (self.source_file.name, self.field.format, str(datetime.now()))
+        try:
+            import md5
+            hash = md5.new(file_string).hexdigest()
+        except ImportError:
+            from hashlib import md5
+            hash = md5(file_string.encode()).hexdigest()
+
         file_name = hash + '.' + self.field.format
 
         return os.path.join(dir, file_name)
