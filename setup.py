@@ -11,7 +11,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 setup(
     name='django-videokit',
 
-    version='0.0.3',
+    version='0.0.4',
 
     description='Video storage and processing for Django',
     long_description=long_description,
