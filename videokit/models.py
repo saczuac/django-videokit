@@ -17,6 +17,9 @@ from videokit.fields import VideoSpecFileDescriptor
 
 from videokit.forms import VideoField as VideoFormField
 
+from django.core.checks import Error
+
+
 class VideoField(models.FileField):
     attr_class = VideoFieldFile
     descriptor_class = VideoFileDescriptor
@@ -48,7 +51,7 @@ class VideoField(models.FileField):
         response = subprocess.call(command, shell = True, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
         if response != 0:
             return [        
-                checks.Error(
+                Error(
                     'ffmpeg is not installed',
                     hint = ('Install FFMPEG from https://www.ffmpeg.org'),
                     obj = self,
@@ -59,7 +62,7 @@ class VideoField(models.FileField):
         response = subprocess.call(command, shell = True, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
         if response != 0:
             return [        
-                checks.Error(
+                Error(
                     'mediainfo is not installed',
                     hint = ('Install Mediainfo from https://mediaarea.net'),
                     obj = self,
